@@ -28,6 +28,7 @@ jobs:
       - name: Filter out everything except your whitelist
         run: |
           WHITELIST=(
+            WHITELIST=(
             "asura-scans"
             "batoto"
             "comick"
@@ -45,6 +46,7 @@ jobs:
             "manganato"
             "mangapill"
             "paragon-scans"
+          
           )
 
           # Build the jq filter string
