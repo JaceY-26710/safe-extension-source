@@ -1,0 +1,80 @@
+name: Refresh Trimmed Index
+
+#
+# This workflow will:
+#  1. Fetch the official Keiyoushi index.min.json
+#  2. Use 'jq' to keep only the sources you want (whitelist)
+#  3. Commit the filtered index.min.json back to your repo
+#
+on:
+  schedule:
+    # Once per day at 02:00 UTC (you can adjust this cron if desired)
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  filter-json:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out this repository
+        uses: actions/checkout@v3
+
+      - name: Fetch official Keiyoushi JSON
+        run: |
+          curl -sSf "https://raw.githubusercontent.com/keiyoushi/extensions/repo/index.min.json" \
+            -o original_index.json
+
+      - name: Filter out everything except your whitelist
+        run: |
+          #
+          # ─── EDIT THIS WHITELIST BELOW ───
+          # Replace the array items with the exact "name" fields you want.
+          # The names must match exactly how they appear in the official JSON.
+          #
+          WHITELIST=(
+            "asura-scans"
+            "batoto"
+            "comick"
+            "dark-scans"
+            "galaxy-degen-scans"
+            "guya"
+            "lhtranslation"
+            "madaradex"
+            "mangabat"
+            "mangadex"
+            "mangafox"
+            "mangafreak"
+            "mangahere"
+            "mangahub"
+            "manganato"
+            "mangapill"
+            "paragon-scans"
+          )
+          #
+          # Build a jq filter that selects only those names:
+          JQ_FILTER='map(select('
+          for name in "${WHITELIST[@]}"; do
+            JQ_FILTER+=".name == \"${name}\" or "
+          done
+          # Remove the trailing ' or '
+          JQ_FILTER="${JQ_FILTER% or }"
+          JQ_FILTER+=')'
+          #
+          # Run jq to produce index.min.json with only your whitelisted entries:
+          cat original_index.json \
+            | jq "$JQ_FILTER" \
+            > index.min.json
+
+      - name: Commit filtered index.min.json (if changed)
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "actions@github.com"
+          git add index.min.json
+
+          if ! git diff --quiet --exit-code; then
+            git commit -m "Automated: refresh trimmed index.min.json"
+            git push
+          else
+            echo "No changes in index.min.json – nothing to commit."
+          fi
