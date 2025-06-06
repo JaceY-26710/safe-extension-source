@@ -1,4 +1,4 @@
-name: Build Extensions
+name: Build Extensions JSON
 
 on:
   push:
@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v3
 
       - name: Set up JDK 17
@@ -23,11 +23,13 @@ jobs:
       - name: Grant execute permission to gradlew
         run: chmod +x ./gradlew
 
-      - name: Build extensions
-        run: ./gradlew :assembleRelease
+      - name: Generate extension JSON (index.min.json)
+        run: ./gradlew generateExtensionJson
 
-      - name: Upload APKs
+      - name: Upload JSON artifact
         uses: actions/upload-artifact@v4
         with:
-          name: extension-apks
-          path: "**/build/outputs/apk/**/*.apk"
+          name: extensions-json
+          path: |
+            ./index.json
+            ./index.min.json
