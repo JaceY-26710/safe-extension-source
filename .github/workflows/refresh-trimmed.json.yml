@@ -1,11 +1,5 @@
 name: Refresh Trimmed Index
 
-#
-# This workflow will:
-#  1. Fetch Keiyoushi’s official index.min.json
-#  2. Keep only the 17 sources you want (using jq)
-#  3. Commit the filtered index.min.json back to your repo
-#
 on:
   schedule:
     # Runs every day at 02:00 UTC (adjust if needed)
@@ -26,9 +20,9 @@ jobs:
             -o original_index.json
 
       - name: Filter out everything except your whitelist
+        shell: bash
         run: |
           WHITELIST=(
-            WHITELIST=(
             "asura-scans"
             "batoto"
             "comick"
@@ -46,7 +40,6 @@ jobs:
             "manganato"
             "mangapill"
             "paragon-scans"
-          
           )
 
           # Build the jq filter string
@@ -55,7 +48,7 @@ jobs:
             JQ_FILTER+=".name == \"${name}\" or "
           done
 
-          # Remove the trailing ' or ' then close select(...) and map(...)
+          # Remove the trailing ' or ' then close both select() and map()
           JQ_FILTER="${JQ_FILTER% or }"
           JQ_FILTER+='))'
 
