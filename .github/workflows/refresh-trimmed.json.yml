@@ -59,7 +59,8 @@ jobs:
           done
           # Remove the trailing ' or '
           JQ_FILTER="${JQ_FILTER% or }"
-          JQ_FILTER+=')'
+          # Close select(...) and map(...)
+          JQ_FILTER+="))"
           #
           # Run jq to produce index.min.json with only your whitelisted entries:
           cat original_index.json \
