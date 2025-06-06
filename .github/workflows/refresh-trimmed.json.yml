@@ -2,13 +2,13 @@ name: Refresh Trimmed Index
 
 #
 # This workflow will:
-#  1. Fetch the official Keiyoushi index.min.json
-#  2. Use 'jq' to keep only the sources you want (whitelist)
+#  1. Fetch Keiyoushi’s official index.min.json
+#  2. Keep only the 17 sources you want (using jq)
 #  3. Commit the filtered index.min.json back to your repo
 #
 on:
   schedule:
-    # Once per day at 02:00 UTC (you can adjust this cron if desired)
+    # Runs every day at 02:00 UTC (adjust if needed)
     - cron: '0 2 * * *'
   workflow_dispatch:
 
@@ -27,11 +27,6 @@ jobs:
 
       - name: Filter out everything except your whitelist
         run: |
-          #
-          # ─── EDIT THIS WHITELIST BELOW ───
-          # Replace the array items with the exact "name" fields you want.
-          # The names must match exactly how they appear in the official JSON.
-          #
           WHITELIST=(
             "asura-scans"
             "batoto"
@@ -51,21 +46,19 @@ jobs:
             "mangapill"
             "paragon-scans"
           )
-          #
-          # Build a jq filter that selects only those names:
+
+          # Build the jq filter string
           JQ_FILTER='map(select('
           for name in "${WHITELIST[@]}"; do
             JQ_FILTER+=".name == \"${name}\" or "
           done
-          # Remove the trailing ' or '
+
+          # Remove the trailing ' or ' then close select(...) and map(...)
           JQ_FILTER="${JQ_FILTER% or }"
-          # Close select(...) and map(...)
-          JQ_FILTER+="))"
-          #
-          # Run jq to produce index.min.json with only your whitelisted entries:
-          cat original_index.json \
-            | jq "$JQ_FILTER" \
-            > index.min.json
+          JQ_FILTER+='))'
+
+          # Run jq with the corrected filter
+          cat original_index.json | jq "$JQ_FILTER" > index.min.json
 
       - name: Commit filtered index.min.json (if changed)
         run: |
@@ -77,5 +70,5 @@ jobs:
             git commit -m "Automated: refresh trimmed index.min.json"
             git push
           else
-            echo "No changes in index.min.json – nothing to commit."
+            echo "No changes in index.min.json — nothing to commit."
           fi
